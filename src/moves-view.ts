@@ -1,10 +1,10 @@
 import { moveType } from './engine.ts';
 import type { AppState, Catalog, Learnset } from './models.ts';
-import { escapeHtml, ruleName, typeBadge, typeById } from './view.ts';
+import { escapeHtml, typeBadge, typeById } from './view.ts';
 
-export function movesShell(catalog: Catalog, state: AppState): string {
-  return `<section class="moves-panel" aria-label="Learnable moves"><div class="panel-heading"><div><span class="eyebrow">MOVE EXPLORER</span><h2>Moves it can learn</h2></div>
-    <span class="rules-tag">${escapeHtml(ruleName(catalog, state))}</span></div><div id="moves-content"><p class="muted">${state.game ? 'Loading this game’s moves…' : 'Choose a specific game above to see its learnable moves and move types.'}</p></div></section>`;
+export function movesShell(state: AppState): string {
+  return `<section class="moves-panel" aria-label="Learnable moves"><div class="panel-heading"><h2>Moves it can learn</h2></div>
+    <div id="moves-content"><p class="muted">${state.game ? 'Loading this game’s moves…' : 'Choose a game above to see learnable moves.'}</p></div></section>`;
 }
 
 export function movesTable(catalog: Catalog, entries: Learnset, generation: number): string {
@@ -19,7 +19,7 @@ export function movesTable(catalog: Catalog, entries: Learnset, generation: numb
     <div class="table-scroll"><table><caption class="sr-only">Moves and ways to learn them in the selected game</caption><thead><tr><th scope="col">Move</th><th scope="col">Type</th><th scope="col">How to learn</th></tr></thead><tbody id="move-rows"></tbody></table></div>
     <p id="no-moves" class="empty-inline" hidden>No moves match these filters.</p>
     <button class="text-button" id="more-moves" type="button" hidden>Show all matching moves</button>
-    <p class="calculation-note">A listed move isn’t necessarily in this Pokémon’s current moveset. Egg, tutor and transfer moves may need other games.</p>`;
+    <p class="calculation-note">Egg, tutor and transfer moves may need other games.</p>`;
 }
 
 export function moveRows(catalog: Catalog, entries: Learnset, generation: number): string {

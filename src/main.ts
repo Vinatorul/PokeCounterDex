@@ -1,6 +1,6 @@
 import './style.css';
 import { loadCatalog, loadLearnsets } from './data.ts';
-import { battleTypes, normalize, pokemonAbilities, pokemonTypes, searchPokemon } from './engine.ts';
+import { battleTypes, normalize, pokemonTypes, searchPokemon } from './engine.ts';
 import { attackPanel, defensePanel, typeResultHeading } from './matchup-view.ts';
 import type { AppState, Catalog, Learnset } from './models.ts';
 import { filterMoves, moveRows, movesShell, movesTable } from './moves-view.ts';
@@ -32,7 +32,7 @@ async function start(): Promise<void> {
     '<main class="workspace"><h1>PokéCounterDex</h1><p role="status">Loading your Pokédex…</p></main>';
   try {
     catalog = await loadCatalog();
-    state = { ...readSelection(catalog), mode: 'pokemon', pokemon: 12, types: [14], ability: 0 };
+    state = { ...readSelection(catalog), mode: 'pokemon', pokemon: 12, types: [14] };
     app.innerHTML = shell();
     bindEvents();
     render();
@@ -79,8 +79,7 @@ function render(): void {
     element(`${mode}-tab`).classList.toggle('active', state.mode === mode);
     element(`${mode}-tab`).setAttribute('aria-pressed', String(state.mode === mode));
   }
-  element('lookup').innerHTML =
-    state.mode === 'pokemon' ? pokemonLookup(catalog, state) : typeLookup(catalog, state);
+  element('lookup').innerHTML = state.mode === 'pokemon' ? pokemonLookup() : typeLookup(catalog, state);
   renderResults();
 }
 
@@ -99,7 +98,7 @@ function renderResults(): void {
   }
   const types = pokemonTypes(pokemon, state.generation);
   element('results').innerHTML =
-    `<div class="result-layout">${pokemonCard(catalog, pokemon, state)}${defensePanel(catalog, types, state)}</div>${movesShell(catalog, state)}`;
+    `<div class="result-layout">${pokemonCard(catalog, pokemon, state)}${defensePanel(catalog, types, state)}</div>${movesShell(state)}`;
   void renderMoves();
 }
 
@@ -136,7 +135,6 @@ function updateMoveRows(): void {
 function setRules(generation: number, game: number | null): void {
   state.generation = generation;
   state.game = game;
-  state.ability = 0;
   const available = battleTypes(catalog, generation).map((type) => type.id);
   state.types = state.types.filter((type) => available.includes(type));
   if (!state.types.length) state.types = [1];
@@ -153,13 +151,11 @@ function changeGame(): void {
 
 function changeMode(mode: AppState['mode']): void {
   state.mode = mode;
-  state.ability = 0;
   render();
 }
 
 function choosePokemon(id: number): void {
   state.pokemon = id;
-  state.ability = 0;
   if (state.mode !== 'pokemon') changeMode('pokemon');
   const pokemon = catalog.pokemon.find((entry) => entry.id === id)!;
   element<HTMLInputElement>('pokemon-search').value = pokemon.displayName;
@@ -193,16 +189,6 @@ function selectType(id: number): void {
 
 function handleChange(event: Event): void {
   const target = event.target as HTMLSelectElement;
-  if (target.id === 'ability') {
-    const pokemon = catalog.pokemon.find((entry) => entry.id === state.pokemon)!;
-    state.ability = pokemonAbilities(pokemon, state.generation).some(
-      (slot) => slot.id === Number(target.value),
-    )
-      ? Number(target.value)
-      : 0;
-    renderResults();
-    element('ability')?.focus();
-  }
   if (target.id === 'second-type') {
     state.types = [state.types[0], ...(target.value ? [Number(target.value)] : [])];
     renderResults();

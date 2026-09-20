@@ -99,10 +99,6 @@ summary {
   font-size: 1.5rem;
   box-shadow: 0 3px 0 #a72131;
 }
-.header-note {
-  font-size: 0.875rem;
-  color: var(--muted);
-}
 .workspace {
   max-width: 1200px;
   padding: 32px;
@@ -163,12 +159,6 @@ select {
 }
 .section-heading {
   margin-bottom: 20px;
-}
-.eyebrow {
-  color: var(--red);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 1.6px;
 }
 h1,
 h2,
@@ -400,13 +390,6 @@ kbd {
   --type: #a34785;
   --tint: #fce9f6;
 }
-.card-caption {
-  font-size: 0.8rem;
-  color: var(--muted);
-  border-top: 1px solid var(--line);
-  padding-top: 18px;
-  margin: 24px 0 0;
-}
 .matchup-panel {
   background: var(--paper);
   border: 1px solid var(--line);
@@ -420,7 +403,7 @@ kbd {
   align-items: start;
 }
 .panel-heading h2 {
-  margin-top: 6px;
+  margin-top: 0;
 }
 .section-label {
   font-size: 0.75rem;
@@ -560,22 +543,6 @@ kbd {
   padding: 18px;
   color: var(--muted);
 }
-.ability-picker {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  margin-top: 24px;
-  gap: 7px;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-.ability-hint {
-  font-size: 0.75rem;
-  color: var(--muted);
-  text-align: left;
-  margin-top: 9px;
-  margin-bottom: 0;
-}
 .neutral-details {
   margin-top: 22px;
   border-top: 1px solid var(--line);
@@ -602,14 +569,6 @@ kbd {
   background: white;
   border: 1px solid var(--line);
   border-radius: 16px;
-}
-.rules-tag {
-  font-size: 0.8rem;
-  padding: 5px 9px;
-  background: #f0f3f7;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--muted);
 }
 .move-filters {
   display: flex;
@@ -742,7 +701,7 @@ td:last-child {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .attack-panel > h2 {
-  margin-top: 6px;
+  margin-top: 0;
 }
 .attack-type {
   padding-top: 20px;
@@ -771,10 +730,6 @@ td:last-child {
   border-radius: 14px;
   background: white;
 }
-.footer-divider {
-  margin: 0 8px;
-  color: #9aa4b3;
-}
 @media (min-width: 761px) and (max-width: 1050px) {
   .damage-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -784,9 +739,6 @@ td:last-child {
   .header-inner {
     min-height: 76px;
     padding: 18px 20px;
-  }
-  .header-note {
-    display: none;
   }
   .workspace {
     padding: 24px 20px;
@@ -825,10 +777,6 @@ td:last-child {
   }
   .pokemon-card h2 {
     font-size: 1.6rem;
-  }
-  .card-caption {
-    margin-top: 18px;
-    padding-top: 12px;
   }
   .matchup-panel {
     padding: 20px;

@@ -60,7 +60,6 @@ export interface AppState extends Selection {
   mode: 'pokemon' | 'types';
   pokemon: number;
   types: number[];
-  ability: number;
 }
 export type Learnset = [move: number, method: number, level: number][];
 export type Learnsets = Record<string, Learnset>;

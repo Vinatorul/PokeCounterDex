@@ -34,8 +34,8 @@ npm run preview
 - Historical Pokémon and move types, including Gen I quirks, the introduction of Steel/Dark/Fairy, and Steel’s changed resistances.
 - Pokémon search covers species introduced by that generation. It is **not a catch-location or in-game availability guide**; trading may be required and some species are unavailable in particular games.
 - Regional, Mega and other alternate forms, Legends games, Colosseum/XD, Terastallization and other battle transformations are not included.
-- Matchups default to type effects. An optional defending-ability selector applies supported passive modifiers such as Levitate, absorption abilities and Thick Fat. Weather, items, conditional abilities, move-specific exceptions and ability suppression are not simulated.
-- Ability history is limited by the source data; hidden ability availability varies by release. Learnsets can be missing. Missing data is shown explicitly rather than replaced with another game’s moves.
+- Matchups use type effects. Abilities, weather, items and move-specific exceptions are not simulated.
+- Learnsets can be missing. Missing data is shown explicitly rather than replaced with another game’s moves.
 - A learnset lists possible moves, not an opponent’s actual four moves. Move power, accuracy and physical/special categories are not displayed.
 
 ## Checks and data refresh

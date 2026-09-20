@@ -1,4 +1,4 @@
-import { attackMatchups, defenseMatchups, supportedAbility } from './engine.ts';
+import { attackMatchups, defenseMatchups } from './engine.ts';
 import type { AppState, Catalog, Matchup } from './models.ts';
 import { escapeHtml, typeBadge, typeBadges, typeById } from './view.ts';
 
@@ -24,24 +24,18 @@ function dualTypeNote(catalog: Catalog, types: number[], rows: Matchup[]): strin
   const row =
     rows.find((entry) => entry.factor >= 4) ??
     rows.find((entry) => entry.parts.includes(2) && entry.parts.includes(0.5));
-  if (!row)
-    return '<div class="matchup-note">Both defending types count. Their damage multipliers are multiplied together.</div>';
+  if (!row) return '';
   const names = types.map((id) => escapeHtml(typeById(catalog, id).name));
   const [first, second] = row.parts;
   return `<div class="matchup-note"><strong>${escapeHtml(row.type.name)}</strong> against ${names[0]} (${multiplier(first)}) and ${names[1]} (${multiplier(second)}): <strong>${first} × ${second} = ${multiplier(first * second)}.</strong></div>`;
 }
 
 export function defensePanel(catalog: Catalog, types: number[], state: AppState): string {
-  const ability = catalog.abilities.find((entry) => entry.id === state.ability);
-  const rows = defenseMatchups(catalog, types, state.generation, ability?.name);
+  const rows = defenseMatchups(catalog, types, state.generation);
   const heading = state.mode === 'pokemon' ? 'What to use against it' : 'What hits this combination';
-  const modifier =
-    ability && supportedAbility(ability.name)
-      ? `Includes ${ability.name}’s passive type effects.`
-      : 'Type matchups only.';
-  return `<section class="matchup-panel" aria-label="Defensive matchups"><div class="panel-heading"><div><span class="eyebrow">ON DEFENSE</span><h2>${heading}</h2></div></div>
+  return `<section class="matchup-panel" aria-label="Defensive matchups"><div class="panel-heading"><h2>${heading}</h2></div>
     <p class="section-label">SUPER EFFECTIVE</p>${damageCards(rows.filter((row) => row.factor > 1))}
-    ${!state.ability ? dualTypeNote(catalog, types, rows) : `<div class="matchup-note">${escapeHtml(modifier)} Only unconditional type effects are included.</div>`}
+    ${dualTypeNote(catalog, types, rows)}
     ${compactGroup(
       'Not very effective',
       rows.filter((row) => row.factor > 0 && row.factor < 1),
@@ -55,13 +49,12 @@ export function defensePanel(catalog: Catalog, types: number[], state: AppState)
         .filter((row) => row.factor === 1)
         .map((row) => typeBadge(row.type))
         .join('') || 'None'
-    }</div></details>
-    <p class="calculation-note">${escapeHtml(modifier)} Weather, items, special move effects and conditional abilities aren’t included.</p></section>`;
+    }</div></details></section>`;
 }
 
 export function attackPanel(catalog: Catalog, state: AppState): string {
-  return `<section class="matchup-panel attack-panel" aria-label="Attacking matchups"><span class="eyebrow">ON ATTACK</span><h2>Where your moves work best</h2>
-    <p class="muted">Each move uses its own type. These results are against single defending types.</p>
+  return `<section class="matchup-panel attack-panel" aria-label="Attacking matchups"><h2>Where your moves work best</h2>
+    <p class="muted">Against single defending types.</p>
     ${state.types.map((id) => attackTypeSection(catalog, id, state.generation)).join('')}</section>`;
 }
 
@@ -83,5 +76,5 @@ function attackTypeSection(catalog: Catalog, id: number, generation: number): st
 }
 
 export function typeResultHeading(catalog: Catalog, state: AppState): string {
-  return `<div class="type-result-heading"><div class="type-list">${typeBadges(catalog, state.types)}</div><span class="muted">${state.types.length === 2 ? 'Combined defense · separate attacking types' : 'Defending and attacking matchups'}</span></div>`;
+  return `<div class="type-result-heading"><div class="type-list">${typeBadges(catalog, state.types)}</div></div>`;
 }
