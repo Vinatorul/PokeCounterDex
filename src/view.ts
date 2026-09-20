@@ -1,6 +1,7 @@
 import { asset } from './data.ts';
 import { battleTypes, pokemonTypes } from './engine.ts';
 import type { AppState, Catalog, Pokemon, Type } from './models.ts';
+import { pokemonHref } from './routes.ts';
 
 export const escapeHtml = (value: string | number): string =>
   String(value).replace(
@@ -22,7 +23,7 @@ export function shell(): string {
     <a class="brand" href="./" aria-label="PokéCounterDex home"><span class="brand-mark" aria-hidden="true">P</span>Poké<span>CounterDex</span></a>
     </div></header>
     <main id="main" class="workspace"><div class="toolbar">
-      <nav class="tabs" aria-label="Lookup mode"><button id="pokemon-tab" class="tab active" type="button" aria-pressed="true">Pokémon</button><button id="gallery-tab" class="tab" type="button" aria-pressed="false">Browse</button><button id="types-tab" class="tab" type="button" aria-pressed="false">Types</button></nav>
+      <nav class="tabs" aria-label="Lookup mode"><a id="pokemon-tab" class="tab active" href="#pokemon" aria-current="page">Pokémon</a><a id="gallery-tab" class="tab" href="#gallery">Browse</a><a id="types-tab" class="tab" href="#types">Types</a></nav>
       <div id="battle-rules" class="rules"><label>Generation<select id="generation"></select></label><label>Game<select id="game"></select></label></div>
     </div><div id="lookup"></div><div id="results"></div>
     <p id="announcement" class="sr-only" role="status" aria-live="polite"></p></main>
@@ -51,7 +52,7 @@ export function rulesOptions(catalog: Catalog, state: AppState): { generations: 
     .join('');
   return {
     generations,
-    games: `<option value="" ${state.game === null ? 'selected' : ''}>Any game · type rules only</option>${groups}`,
+    games: `<option value="" ${state.game === null ? 'selected' : ''}>Any game</option>${groups}`,
   };
 }
 
@@ -76,9 +77,9 @@ export function suggestions(catalog: Catalog, pokemon: Pokemon[], state: AppStat
       (
         entry,
         index,
-      ) => `<div class="suggestion" id="suggestion-${index}" role="option" aria-selected="false" data-pokemon="${entry.id}">
+      ) => `<a class="suggestion" href="${escapeHtml(pokemonHref(entry, state))}" id="suggestion-${index}" role="option" tabindex="-1" aria-selected="false" data-pokemon="${entry.id}">
     <img src="${asset(`sprites/${entry.id}.png`)}" alt="" width="40" height="40" /><span class="suggestion-name">${escapeHtml(entry.displayName)}<small>#${String(entry.id).padStart(4, '0')}</small></span>
-    <span class="type-list">${typeBadges(catalog, pokemonTypes(entry, Math.max(entry.generation, state.generation)))}</span></div>`,
+    <span class="type-list">${typeBadges(catalog, pokemonTypes(entry, Math.max(entry.generation, state.generation)))}</span></a>`,
     )
     .join('');
 }

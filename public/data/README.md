@@ -22,6 +22,7 @@ The generated `manifest.json` records the revision, attribution, counts, and SHA
 ## Files and schema
 
 - `catalog.json` contains generations, games, Pokémon, types, abilities, move names/types, learning methods, and the type chart.
+- `evolutions` lists standard-form family links and their game-specific methods, levels and conditions. Evolution data comes from the same pinned PokéAPI source; regional-form-only branches are excluded.
 - Each game's `availablePokemon` lists supported species as default Pokémon IDs, including trades, transfers, DLC and historical events. This is independent of learnset coverage.
 - `learnsets/{versionGroupId}.json` maps a Pokémon ID to arrays of `[moveId, methodId, level]`. The IDs are original PokéAPI IDs. Identical tuples are deduplicated. Level zero is preserved; do not assume it means a level-up move.
 - `manifest.json` gives per-game Pokémon and record counts, input/output hashes, source notes, and attribution.

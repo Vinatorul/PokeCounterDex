@@ -1,6 +1,7 @@
 import { asset } from './data.ts';
 import { pokemonTypes } from './engine.ts';
 import type { Catalog, GalleryFilters, Pokemon, Selection } from './models.ts';
+import { pokemonHref } from './routes.ts';
 import { escapeHtml, typeBadges } from './view.ts';
 
 export function galleryLookup(catalog: Catalog, filters: GalleryFilters): string {
@@ -23,14 +24,13 @@ export function galleryLookup(catalog: Catalog, filters: GalleryFilters): string
 
 export function galleryCards(catalog: Catalog, pokemon: Pokemon[], selection: Selection): string {
   if (!pokemon.length) return '<p class="empty-state">No Pokémon match these filters.</p>';
-  const generation = selection.generation;
-  return `<section class="gallery-grid" aria-label="Pokémon gallery">${pokemon.map((entry) => galleryCard(catalog, entry, generation)).join('')}</section>`;
+  return `<section class="gallery-grid" aria-label="Pokémon gallery">${pokemon.map((entry) => galleryCard(catalog, entry, selection)).join('')}</section>`;
 }
 
-function galleryCard(catalog: Catalog, pokemon: Pokemon, generation: number): string {
-  return `<button class="gallery-card" type="button" data-pokemon="${pokemon.id}" aria-label="View ${escapeHtml(pokemon.displayName)}">
+function galleryCard(catalog: Catalog, pokemon: Pokemon, selection: Selection): string {
+  return `<a class="gallery-card" href="${escapeHtml(pokemonHref(pokemon, selection))}" data-pokemon="${pokemon.id}" aria-label="View ${escapeHtml(pokemon.displayName)}">
     <span class="gallery-number">#${String(pokemon.id).padStart(4, '0')}</span>
     <img src="${asset(`sprites/${pokemon.id}.png`)}" alt="" width="96" height="96" loading="lazy" decoding="async" />
     <strong>${escapeHtml(pokemon.displayName)}</strong>
-    <span class="type-list">${typeBadges(catalog, pokemonTypes(pokemon, Math.max(pokemon.generation, generation)))}</span></button>`;
+    <span class="type-list">${typeBadges(catalog, pokemonTypes(pokemon, Math.max(pokemon.generation, selection.generation)))}</span></a>`;
 }

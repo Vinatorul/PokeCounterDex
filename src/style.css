@@ -121,6 +121,9 @@ summary {
   border-radius: 12px;
 }
 .tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 42px;
   min-width: 90px;
   padding: 8px 16px;
@@ -781,6 +784,87 @@ td:last-child {
 .gallery-card .type-badge::before {
   display: none;
 }
+.tab,
+.gallery-card,
+.suggestion {
+  text-decoration: none;
+}
+.evolutions-panel {
+  padding: 26px;
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+.evolutions-panel > p {
+  margin-bottom: 0;
+}
+.evolution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.evolution-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.evolution-pokemon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  padding: 8px 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.evolution-pokemon:hover {
+  background: #f5f7fa;
+}
+.evolution-pokemon[aria-current="page"] {
+  border-color: #f0bdc4;
+  background: #fff8f8;
+}
+.evolution-pokemon img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.evolution-requirements {
+  text-align: center;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.evolution-arrow {
+  display: block;
+  font-size: 1.4rem;
+  color: var(--muted);
+}
+.evolution-method {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.evolution-or,
+.evolution-games {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.evolution-or {
+  display: block;
+  margin: 10px 0;
+}
 @media (min-width: 761px) and (max-width: 1050px) {
   .damage-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -905,6 +989,16 @@ td:last-child {
 }
 
 @media (max-width: 480px) {
+  .evolutions-panel {
+    padding: 20px;
+  }
+  .evolution-grid {
+    grid-template-columns: 1fr;
+  }
+  .evolution-row {
+    padding: 8px;
+    gap: 4px;
+  }
   .tabs {
     width: 100%;
   }

@@ -1,11 +1,13 @@
 import './style.css';
 import { loadCatalog, loadLearnsets } from './data.ts';
-import { battleTypes, normalize, pokemonTypes, rulesForPokemon, searchPokemon } from './engine.ts';
+import { battleTypes, normalize, pokemonTypes, searchPokemon } from './engine.ts';
+import { evolutionsPanel } from './evolutions-view.ts';
 import { galleryPokemon, gallerySelection } from './gallery.ts';
 import { galleryCards, galleryLookup } from './gallery-view.ts';
 import { attackPanel, defensePanel, typeResultHeading } from './matchup-view.ts';
 import type { AppState, Catalog, GalleryFilters, Learnset } from './models.ts';
 import { filterMoves, moveRows, movesShell, movesTable } from './moves-view.ts';
+import { pageHref, pokemonHref, readRoute } from './routes.ts';
 import { readSelection, saveSelection } from './storage.ts';
 import {
   escapeHtml,
@@ -35,7 +37,13 @@ async function start(): Promise<void> {
     '<main class="workspace"><h1>PokéCounterDex</h1><p role="status">Loading your Pokédex…</p></main>';
   try {
     catalog = await loadCatalog();
-    state = { ...readSelection(catalog), mode: routeMode(), pokemon: 12, types: [14] };
+    state = readRoute(catalog, window.location.hash, {
+      ...readSelection(catalog),
+      mode: 'pokemon',
+      pokemon: 12,
+      types: [14],
+    });
+    window.history.replaceState(null, '', pageHref(state));
     app.innerHTML = shell();
     bindEvents();
     render();
@@ -52,14 +60,7 @@ function bindEvents(): void {
     setRules(Number(element<HTMLSelectElement>('generation').value), null),
   );
   element('game').addEventListener('change', changeGame);
-  element('pokemon-tab').addEventListener('click', () => changeMode('pokemon'));
-  element('types-tab').addEventListener('click', () => changeMode('types'));
-  element('gallery-tab').addEventListener('click', () => changeMode('gallery'));
-  window.addEventListener('hashchange', () => {
-    if (window.location.hash === '#main' || state.mode === routeMode()) return;
-    state.mode = routeMode();
-    render();
-  });
+  window.addEventListener('hashchange', applyRoute);
   app.addEventListener('click', handleClick);
   app.addEventListener('change', handleChange);
   app.addEventListener('input', handleInput);
@@ -85,12 +86,15 @@ function focusSearch(event: KeyboardEvent): void {
 }
 
 function render(): void {
+  document.title = `${pageTitle()} — PokéCounterDex`;
   const options = rulesOptions(catalog, state);
   element('generation').innerHTML = options.generations;
   element('game').innerHTML = options.games;
-  for (const mode of ['pokemon', 'types', 'gallery']) {
+  for (const mode of ['pokemon', 'types', 'gallery'] as const) {
     element(`${mode}-tab`).classList.toggle('active', state.mode === mode);
-    element(`${mode}-tab`).setAttribute('aria-pressed', String(state.mode === mode));
+    element(`${mode}-tab`).setAttribute('href', pageHref(state, mode));
+    if (state.mode === mode) element(`${mode}-tab`).setAttribute('aria-current', 'page');
+    else element(`${mode}-tab`).removeAttribute('aria-current');
   }
   element('battle-rules').hidden = state.mode === 'gallery';
   if (state.mode === 'gallery') {
@@ -100,6 +104,12 @@ function render(): void {
   }
   element('lookup').innerHTML = state.mode === 'pokemon' ? pokemonLookup() : typeLookup(catalog, state);
   renderResults();
+}
+
+function pageTitle(): string {
+  if (state.mode === 'gallery') return 'Browse Pokémon';
+  if (state.mode === 'types') return 'Type matchups';
+  return catalog.pokemon.find((entry) => entry.id === state.pokemon)!.displayName;
 }
 
 function renderResults(): void {
@@ -121,7 +131,7 @@ function renderResults(): void {
   }
   const types = pokemonTypes(pokemon, state.generation);
   element('results').innerHTML =
-    `<div class="result-layout">${pokemonCard(catalog, pokemon, state)}${defensePanel(catalog, types, state)}</div>${movesShell(state)}`;
+    `<div class="result-layout">${pokemonCard(catalog, pokemon, state)}${defensePanel(catalog, types, state)}</div>${evolutionsPanel(catalog, state)}${movesShell(state)}`;
   void renderMoves();
 }
 
@@ -170,6 +180,7 @@ function setRules(generation: number, game: number | null): void {
   state.types = state.types.filter((type) => available.includes(type));
   if (!state.types.length) state.types = [1];
   saveSelection(state);
+  window.history.replaceState(null, '', pageHref(state));
   render();
   announce(`Using ${ruleName(catalog, state)} rules.`);
 }
@@ -180,29 +191,24 @@ function changeGame(): void {
   setRules(game?.generation ?? state.generation, game?.id ?? null);
 }
 
-function changeMode(mode: AppState['mode']): void {
-  state.mode = mode;
-  window.location.hash = mode;
+function applyRoute(): void {
+  if (window.location.hash === '#main') return;
+  state = readRoute(catalog, window.location.hash, state);
+  window.history.replaceState(null, '', pageHref(state));
+  saveSelection(state);
   render();
-}
-
-function routeMode(): AppState['mode'] {
-  const mode = window.location.hash.slice(1);
-  return mode === 'gallery' || mode === 'types' ? mode : 'pokemon';
-}
-
-function choosePokemon(id: number, fromGallery = false): void {
-  state.pokemon = id;
-  const pokemon = catalog.pokemon.find((entry) => entry.id === id)!;
-  const current = fromGallery ? gallerySelection(catalog, gallery, state) : state;
-  const selection = rulesForPokemon(pokemon, current);
-  state.mode = 'pokemon';
-  window.location.hash = 'pokemon';
-  setRules(selection.generation, selection.game);
+  if (state.mode !== 'pokemon') return;
+  const pokemon = catalog.pokemon.find((entry) => entry.id === state.pokemon)!;
   element<HTMLInputElement>('pokemon-search').value = pokemon.displayName;
-  closeSuggestions();
   element<HTMLInputElement>('pokemon-search').focus();
   announce(`Showing ${pokemon.displayName} with ${ruleName(catalog, state)} rules.`);
+}
+
+function choosePokemon(id: number): void {
+  const pokemon = catalog.pokemon.find((entry) => entry.id === id)!;
+  const href = pokemonHref(pokemon, state);
+  if (window.location.hash !== href) window.history.pushState(null, '', href);
+  applyRoute();
 }
 
 function announce(message: string): void {
@@ -211,8 +217,16 @@ function announce(message: string): void {
 
 function handleClick(event: MouseEvent): void {
   const target = event.target as HTMLElement;
-  const suggestion = target.closest<HTMLElement>('[data-pokemon]');
-  if (suggestion) choosePokemon(Number(suggestion.dataset.pokemon), state.mode === 'gallery');
+  const link = target.closest<HTMLAnchorElement>('a[data-pokemon]');
+  if (
+    link?.hash === window.location.hash &&
+    event.button === 0 &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.shiftKey &&
+    !event.altKey
+  )
+    applyRoute();
   const type = target.closest<HTMLElement>('[data-type-id]');
   if (type) selectType(Number(type.dataset.typeId));
   if (target.id === 'more-moves') {
@@ -229,6 +243,7 @@ function handleClick(event: MouseEvent): void {
 
 function selectType(id: number): void {
   state.types = [id, ...state.types.slice(1).filter((type) => type !== id)];
+  window.history.replaceState(null, '', pageHref(state));
   render();
   element('type-grid').querySelector<HTMLButtonElement>(`[data-type-id="${id}"]`)?.focus();
 }
@@ -242,7 +257,9 @@ function handleChange(event: Event): void {
   }
   if (target.id === 'second-type') {
     state.types = [state.types[0], ...(target.value ? [Number(target.value)] : [])];
-    renderResults();
+    window.history.replaceState(null, '', pageHref(state));
+    render();
+    element('second-type').focus();
   }
   if (['move-type', 'move-method'].includes(target.id)) {
     showAllMoves = false;

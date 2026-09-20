@@ -17,6 +17,10 @@ Search finds Pokémon from every generation. Selecting a Pokémon introduced aft
 
 Open **Browse** to choose a Pokémon by its picture. It starts with all 1,025 Pokémon, with optional name, introduction-generation and game filters. **Clear filters** restores the full gallery. The gallery is directly accessible at `#gallery` and supports browser Back/Forward navigation.
 
+Pokémon cards, search results and evolution links support Ctrl/Cmd-click, middle-click and **Open link in new tab**. Pokémon URLs preserve the selected Pokémon, generation and game, and can be bookmarked or shared.
+
+Each Pokémon page shows its evolution family with levels, items, trades and other requirements for the selected game. When only a generation is selected, game-specific alternatives are labeled. Evolution links open the corresponding Pokémon page.
+
 ## GitHub Pages
 
 1. In the repository, open **Settings → Pages**.

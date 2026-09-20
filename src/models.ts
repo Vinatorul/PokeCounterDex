@@ -42,11 +42,22 @@ export interface Catalog {
   games: Game[];
   types: Type[];
   pokemon: Pokemon[];
+  evolutions: Evolution[];
   abilities: Ability[];
   moves: Move[];
   methods: { id: number; name: string; identifier: string }[];
   efficacy: [number, number, number][];
   pastEfficacy: { generation: number; attack: number; defense: number; factor: number }[];
+}
+export interface EvolutionMethod {
+  games: number[];
+  level: number | null;
+  conditions: string[];
+}
+export interface Evolution {
+  from: number;
+  to: number;
+  methods: EvolutionMethod[];
 }
 export interface Matchup {
   type: Type;

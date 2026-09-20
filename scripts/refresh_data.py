@@ -11,6 +11,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from evolution_data import EVOLUTION_TABLES, build_evolutions
 from game_availability import SHOWDOWN_FILES, SHOWDOWN_REPOSITORY, SHOWDOWN_REVISION, game_availability
 
 REVISION = "575291cdb197a7e3a320297be276c9de4ef8401a"
@@ -55,6 +56,7 @@ TABLES = [
     "version_names",
     "pokemon_forms",
     "pokemon_form_names",
+    *EVOLUTION_TABLES,
 ]
 FILES = [f"data/v2/csv/{name}.csv" for name in TABLES] + ["LICENSE.md"]
 
@@ -381,6 +383,7 @@ def build_catalog(data, revision, pokemon, games, learnsets):
         "games": games,
         "types": build_types(data),
         "pokemon": pokemon,
+        "evolutions": build_evolutions(data, pokemon, games),
         "abilities": build_abilities(data),
         "moves": build_moves(data, learnsets),
         "efficacy": efficacy,
@@ -403,7 +406,9 @@ def file_record(path, relative):
 
 
 def build_manifest(args, catalog, learnsets):
-    counts = {key: len(catalog[key]) for key in ("pokemon", "games", "types", "abilities", "moves", "methods")}
+    counts = {
+        key: len(catalog[key]) for key in ("pokemon", "games", "types", "abilities", "moves", "methods", "evolutions")
+    }
     counts["learnsetRecords"] = sum(len(values) for entries in learnsets.values() for values in entries.values())
     return {
         "source": source_metadata(args.revision),

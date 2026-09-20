@@ -73,7 +73,8 @@ export function registerTools(
       const value = validateInput(input, catalog);
       rules(value.generation, value.game);
       choose(value.pokemon.id);
-      return lookupResult(catalog, value.pokemon, { generation: getState().generation, game: value.game });
+      const { generation, game } = getState();
+      return lookupResult(catalog, value.pokemon, { generation, game });
     },
   };
   try {
