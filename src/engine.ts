@@ -1,4 +1,4 @@
-import type { AbilitySlot, Catalog, Matchup, Move, Pokemon } from './models.ts';
+import type { AbilitySlot, Catalog, Matchup, Move, Pokemon, Selection } from './models.ts';
 
 export function historical<T extends { generation: number }>(
   entries: T[],
@@ -112,11 +112,10 @@ export function normalize(value: string): string {
     .replace(/[^a-z0-9]/g, '');
 }
 
-export function searchPokemon(catalog: Catalog, query: string, generation: number): Pokemon[] {
+export function searchPokemon(catalog: Catalog, query: string): Pokemon[] {
   const term = normalize(query);
-  const available = catalog.pokemon.filter((pokemon) => pokemon.generation <= generation);
   if (!term) return [];
-  return available
+  return catalog.pokemon
     .filter(
       (pokemon) =>
         normalize(pokemon.displayName).includes(term) ||
@@ -128,4 +127,10 @@ export function searchPokemon(catalog: Catalog, query: string, generation: numbe
         Number(normalize(b.displayName).startsWith(term)) -
           Number(normalize(a.displayName).startsWith(term)) || a.id - b.id,
     );
+}
+
+export function rulesForPokemon(pokemon: Pokemon, selection: Selection): Selection {
+  return pokemon.generation > selection.generation
+    ? { generation: pokemon.generation, game: null }
+    : { generation: selection.generation, game: selection.game };
 }

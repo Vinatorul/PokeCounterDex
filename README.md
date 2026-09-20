@@ -13,6 +13,10 @@ npm run dev
 
 The default selection is FireRed / LeafGreen. Game and generation preferences are saved in your browser. Selecting a game sets its generation; selecting a generation clears the game selection. Pick a game to see exact learnsets.
 
+Search finds Pokémon from every generation. Selecting a Pokémon introduced after the current rules switches to its introduction generation and clears the older game selection.
+
+Open **Browse** to choose a Pokémon by its picture. It starts with all 1,025 Pokémon, with optional name, introduction-generation and game filters. **Clear filters** restores the full gallery. The gallery is directly accessible at `#gallery` and supports browser Back/Forward navigation.
+
 ## GitHub Pages
 
 1. In the repository, open **Settings → Pages**.
@@ -32,7 +36,7 @@ npm run preview
 
 - Generations I–IX, 1,025 species in their standard forms and 20 game groups. Related releases such as FireRed / LeafGreen share their source learnset group.
 - Historical Pokémon and move types, including Gen I quirks, the introduction of Steel/Dark/Fairy, and Steel’s changed resistances.
-- Pokémon search covers species introduced by that generation. It is **not a catch-location or in-game availability guide**; trading may be required and some species are unavailable in particular games.
+- Game filters include supported species obtainable through trades, transfers, DLC and historical events. They are not limited to regional Pokédexes or currently active events. Paired versions are combined; the lists do not show catch locations or form-specific availability.
 - Regional, Mega and other alternate forms, Legends games, Colosseum/XD, Terastallization and other battle transformations are not included.
 - Matchups use type effects. Abilities, weather, items and move-specific exceptions are not simulated.
 - Learnsets can be missing. Missing data is shown explicitly rather than replaced with another game’s moves.
@@ -47,7 +51,7 @@ npm run build
 python3 scripts/verify_data.py
 ```
 
-PokéAPI data and sprites are bundled at pinned source revisions. Ordinary builds do not download data. See `public/data/README.md` and the attribution files under `public/` for source details and licenses. Refreshing the data requires Python 3.10+ and network access:
+PokéAPI data, Pokémon Showdown game rosters and sprites are bundled at pinned source revisions. Ordinary builds do not download data. See `public/data/README.md` and the attribution files under `public/` for source details and licenses. Refreshing the data requires Python 3.10+ and network access:
 
 ```sh
 python3 scripts/refresh_data.py
@@ -60,6 +64,6 @@ The interface uses TypeScript, Vite and plain CSS. The browser’s experimental 
 
 ## Credits
 
-Data: [PokéAPI](https://github.com/PokeAPI/pokeapi). Sprites: [PokéAPI sprites](https://github.com/PokeAPI/sprites), including community artwork for later generations. Fonts: DM Sans and Space Grotesk, distributed under the SIL Open Font License. Pokémon and Pokémon character names belong to their respective owners. This is an unofficial fan project.
+Data: [PokéAPI](https://github.com/PokeAPI/pokeapi). Game rosters: [Pokémon Showdown](https://github.com/smogon/pokemon-showdown), distributed under the MIT license. Sprites: [PokéAPI sprites](https://github.com/PokeAPI/sprites), including community artwork for later generations. Fonts: DM Sans and Space Grotesk, distributed under the SIL Open Font License. Pokémon and Pokémon character names belong to their respective owners. This is an unofficial fan project.
 
 Project code is distributed under the repository’s MIT license. Bundled third-party data, images and fonts retain their own notices.

@@ -41,14 +41,8 @@ function validateInput(input: unknown, catalog: Catalog) {
   );
   const generation = catalog.generations.find((entry) => entry.id === value.generation)?.id;
   const game = value.game === undefined ? null : catalog.games.find((entry) => entry.id === value.game);
-  if (
-    !pokemon ||
-    !generation ||
-    pokemon.generation > generation ||
-    game === undefined ||
-    (game && game.generation !== generation)
-  )
-    throw new Error('Choose a Pokémon and game available in that generation.');
+  if (!pokemon || !generation || game === undefined || (game && game.generation !== generation))
+    throw new Error('Choose a valid Pokémon, generation and matching game.');
   return { pokemon, generation, game: game?.id ?? null };
 }
 

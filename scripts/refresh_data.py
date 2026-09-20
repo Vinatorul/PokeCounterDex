@@ -11,6 +11,8 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from game_availability import SHOWDOWN_FILES, SHOWDOWN_REPOSITORY, SHOWDOWN_REVISION, game_availability
+
 REVISION = "575291cdb197a7e3a320297be276c9de4ef8401a"
 REPOSITORY = "https://github.com/PokeAPI/pokeapi"
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,8 +69,7 @@ def arguments():
 
 
 def download_file(item):
-    relative, revision, cache = item
-    url = f"https://raw.githubusercontent.com/PokeAPI/pokeapi/{revision}/{relative}"
+    relative, url, cache = item
     destination = cache / relative
     destination.parent.mkdir(parents=True, exist_ok=True)
     with urllib.request.urlopen(url, timeout=90) as response:
@@ -76,17 +77,32 @@ def download_file(item):
     destination.write_bytes(content)
 
 
+def source_files(revision):
+    result = {path: f"https://raw.githubusercontent.com/PokeAPI/pokeapi/{revision}/{path}" for path in FILES}
+    result.update(
+        {
+            f"showdown/{path}": f"https://raw.githubusercontent.com/smogon/pokemon-showdown/{SHOWDOWN_REVISION}/{path}"
+            for path in SHOWDOWN_FILES
+        }
+    )
+    return result
+
+
 def prepare_source(args):
     if not re.fullmatch(r"[0-9a-f]{40}", args.revision):
         raise ValueError("--revision must be a full lowercase commit SHA")
     marker = args.cache / "REVISION"
+    showdown_marker = args.cache / "showdown/REVISION"
     if args.offline:
         if not marker.exists() or marker.read_text().strip() != args.revision:
             raise ValueError("Offline cache does not match the requested revision")
+        if not showdown_marker.exists() or showdown_marker.read_text().strip() != SHOWDOWN_REVISION:
+            raise ValueError("Offline Showdown cache does not match the requested revision")
         return
     with ThreadPoolExecutor(max_workers=6) as pool:
-        list(pool.map(download_file, ((p, args.revision, args.cache) for p in FILES)))
+        list(pool.map(download_file, ((path, url, args.cache) for path, url in source_files(args.revision).items())))
     marker.write_text(args.revision + "\n")
+    showdown_marker.write_text(SHOWDOWN_REVISION + "\n")
 
 
 def read_table(cache, name):
@@ -113,7 +129,7 @@ def names(data, table, key, field="name"):
     return {int(row[key]): row[field] for row in data[table] if row["local_language_id"] == "9" and row[field]}
 
 
-def build_games(data):
+def build_games(data, availability):
     groups = index(data["version_groups"])
     versions = group(data["versions"], "version_group_id")
     labels = names(data, "version_names", "version_id")
@@ -126,6 +142,7 @@ def build_games(data):
                 "name": label,
                 "generation": int(groups[game_id]["generation_id"]),
                 "abilitiesEnabled": game_id != 19 and int(groups[game_id]["generation_id"]) >= 3,
+                "availablePokemon": availability[game_id],
             }
         )
     return games
@@ -320,6 +337,7 @@ def source_metadata(revision):
         "historySemantics": "Inclusive generation cutoff: select the first past entry with cutoff >= requested generation, else use current.",
         "pokemonScope": "One default Pokémon per species through generation IX. No alternate or regional forms.",
         "availabilityNote": "Generation is species introduction, not proof of local catchability, transferability, or availability in a selected game.",
+        "availabilitySource": {"url": SHOWDOWN_REPOSITORY, "revision": SHOWDOWN_REVISION},
         "learnsetNote": "Only explicit records for the selected version group. Missing entries mean no data; no fallback to another game. Groups 20 and 25 contain source DLC-era updates.",
         "abilityHistoryNote": "Reconstructed from sparse slot changes; source history can be incomplete. No abilities before generation III or in Let's Go; no hidden abilities before generation V. Hidden slot presence does not establish release availability.",
         "abilityDescriptionNote": "Descriptions use the latest available English text in a supported game, not historical battle effects.",
@@ -390,7 +408,7 @@ def build_manifest(args, catalog, learnsets):
     return {
         "source": source_metadata(args.revision),
         "counts": counts,
-        "inputs": [file_record(args.cache / path, path) for path in FILES],
+        "inputs": [file_record(args.cache / path, path) for path in source_files(args.revision)],
         "outputs": [
             file_record(path, str(path.relative_to(args.output)))
             for path in sorted(args.output.rglob("*.json"))
@@ -411,13 +429,15 @@ def main():
     args = arguments()
     prepare_source(args)
     data = load_tables(args.cache)
-    games, pokemon = build_games(data), build_pokemon(data)
+    games = build_games(data, game_availability(args.cache, data["pokemon"]))
+    pokemon = build_pokemon(data)
     learnsets = build_learnsets(args.cache, pokemon, games, data)
     catalog = build_catalog(data, args.revision, pokemon, games, learnsets)
     write_json(args.output / "catalog.json", catalog)
     for game_id, entries in learnsets.items():
         write_json(args.output / f"learnsets/{game_id}.json", entries)
     (args.output / "POKEAPI-LICENSE.txt").write_bytes((args.cache / "LICENSE.md").read_bytes())
+    (args.output / "SHOWDOWN-LICENSE.txt").write_bytes((args.cache / "showdown/LICENSE").read_bytes())
     manifest = build_manifest(args, catalog, learnsets)
     write_json(args.output / "manifest.json", manifest)
     print(json.dumps(manifest["counts"], indent=2))

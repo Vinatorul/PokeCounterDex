@@ -1,8 +1,10 @@
 import './style.css';
 import { loadCatalog, loadLearnsets } from './data.ts';
-import { battleTypes, normalize, pokemonTypes, searchPokemon } from './engine.ts';
+import { battleTypes, normalize, pokemonTypes, rulesForPokemon, searchPokemon } from './engine.ts';
+import { galleryPokemon, gallerySelection } from './gallery.ts';
+import { galleryCards, galleryLookup } from './gallery-view.ts';
 import { attackPanel, defensePanel, typeResultHeading } from './matchup-view.ts';
-import type { AppState, Catalog, Learnset } from './models.ts';
+import type { AppState, Catalog, GalleryFilters, Learnset } from './models.ts';
 import { filterMoves, moveRows, movesShell, movesTable } from './moves-view.ts';
 import { readSelection, saveSelection } from './storage.ts';
 import {
@@ -26,13 +28,14 @@ let activeSuggestion = -1;
 let moveRequest = 0;
 let currentMoves: Learnset = [];
 let showAllMoves = false;
+const gallery: GalleryFilters = { generation: null, game: null, query: '' };
 
 async function start(): Promise<void> {
   app.innerHTML =
     '<main class="workspace"><h1>PokéCounterDex</h1><p role="status">Loading your Pokédex…</p></main>';
   try {
     catalog = await loadCatalog();
-    state = { ...readSelection(catalog), mode: 'pokemon', pokemon: 12, types: [14] };
+    state = { ...readSelection(catalog), mode: routeMode(), pokemon: 12, types: [14] };
     app.innerHTML = shell();
     bindEvents();
     render();
@@ -51,6 +54,12 @@ function bindEvents(): void {
   element('game').addEventListener('change', changeGame);
   element('pokemon-tab').addEventListener('click', () => changeMode('pokemon'));
   element('types-tab').addEventListener('click', () => changeMode('types'));
+  element('gallery-tab').addEventListener('click', () => changeMode('gallery'));
+  window.addEventListener('hashchange', () => {
+    if (window.location.hash === '#main' || state.mode === routeMode()) return;
+    state.mode = routeMode();
+    render();
+  });
   app.addEventListener('click', handleClick);
   app.addEventListener('change', handleChange);
   app.addEventListener('input', handleInput);
@@ -58,26 +67,36 @@ function bindEvents(): void {
   document.addEventListener('click', (event) => {
     if (!(event.target as HTMLElement).closest('.search-area')) closeSuggestions();
   });
-  document.addEventListener('keydown', (event) => {
-    if (
-      event.key !== '/' ||
-      event.ctrlKey ||
-      event.metaKey ||
-      /INPUT|SELECT|TEXTAREA/.test((event.target as HTMLElement).tagName)
-    )
-      return;
-    event.preventDefault();
-    element<HTMLInputElement>(state.mode === 'pokemon' ? 'pokemon-search' : 'type-search').focus();
-  });
+  document.addEventListener('keydown', focusSearch);
+}
+
+function focusSearch(event: KeyboardEvent): void {
+  if (
+    event.key !== '/' ||
+    event.ctrlKey ||
+    event.metaKey ||
+    /INPUT|SELECT|TEXTAREA/.test((event.target as HTMLElement).tagName)
+  )
+    return;
+  event.preventDefault();
+  element<HTMLInputElement>(
+    { pokemon: 'pokemon-search', types: 'type-search', gallery: 'gallery-search' }[state.mode],
+  ).focus();
 }
 
 function render(): void {
   const options = rulesOptions(catalog, state);
   element('generation').innerHTML = options.generations;
   element('game').innerHTML = options.games;
-  for (const mode of ['pokemon', 'types']) {
+  for (const mode of ['pokemon', 'types', 'gallery']) {
     element(`${mode}-tab`).classList.toggle('active', state.mode === mode);
     element(`${mode}-tab`).setAttribute('aria-pressed', String(state.mode === mode));
+  }
+  element('battle-rules').hidden = state.mode === 'gallery';
+  if (state.mode === 'gallery') {
+    element('lookup').innerHTML = galleryLookup(catalog, gallery);
+    renderResults();
+    return;
   }
   element('lookup').innerHTML = state.mode === 'pokemon' ? pokemonLookup() : typeLookup(catalog, state);
   renderResults();
@@ -85,6 +104,10 @@ function render(): void {
 
 function renderResults(): void {
   moveRequest++;
+  if (state.mode === 'gallery') {
+    renderGallery();
+    return;
+  }
   if (state.mode === 'types') {
     element('results').innerHTML =
       `${typeResultHeading(catalog, state)}<div class="type-results">${defensePanel(catalog, state.types, state)}${attackPanel(catalog, state)}</div>`;
@@ -100,6 +123,14 @@ function renderResults(): void {
   element('results').innerHTML =
     `<div class="result-layout">${pokemonCard(catalog, pokemon, state)}${defensePanel(catalog, types, state)}</div>${movesShell(state)}`;
   void renderMoves();
+}
+
+function renderGallery(): void {
+  const pokemon = galleryPokemon(catalog, gallery);
+  element('results').innerHTML = galleryCards(catalog, pokemon, gallerySelection(catalog, gallery, state));
+  element('gallery-count').textContent = `${pokemon.length.toLocaleString()} Pokémon`;
+  element<HTMLButtonElement>('clear-gallery').disabled =
+    !gallery.generation && !gallery.game && !gallery.query;
 }
 
 async function renderMoves(): Promise<void> {
@@ -151,16 +182,26 @@ function changeGame(): void {
 
 function changeMode(mode: AppState['mode']): void {
   state.mode = mode;
+  window.location.hash = mode;
   render();
 }
 
-function choosePokemon(id: number): void {
+function routeMode(): AppState['mode'] {
+  const mode = window.location.hash.slice(1);
+  return mode === 'gallery' || mode === 'types' ? mode : 'pokemon';
+}
+
+function choosePokemon(id: number, fromGallery = false): void {
   state.pokemon = id;
-  if (state.mode !== 'pokemon') changeMode('pokemon');
   const pokemon = catalog.pokemon.find((entry) => entry.id === id)!;
+  const current = fromGallery ? gallerySelection(catalog, gallery, state) : state;
+  const selection = rulesForPokemon(pokemon, current);
+  state.mode = 'pokemon';
+  window.location.hash = 'pokemon';
+  setRules(selection.generation, selection.game);
   element<HTMLInputElement>('pokemon-search').value = pokemon.displayName;
   closeSuggestions();
-  renderResults();
+  element<HTMLInputElement>('pokemon-search').focus();
   announce(`Showing ${pokemon.displayName} with ${ruleName(catalog, state)} rules.`);
 }
 
@@ -171,7 +212,7 @@ function announce(message: string): void {
 function handleClick(event: MouseEvent): void {
   const target = event.target as HTMLElement;
   const suggestion = target.closest<HTMLElement>('[data-pokemon]');
-  if (suggestion) choosePokemon(Number(suggestion.dataset.pokemon));
+  if (suggestion) choosePokemon(Number(suggestion.dataset.pokemon), state.mode === 'gallery');
   const type = target.closest<HTMLElement>('[data-type-id]');
   if (type) selectType(Number(type.dataset.typeId));
   if (target.id === 'more-moves') {
@@ -179,6 +220,11 @@ function handleClick(event: MouseEvent): void {
     updateMoveRows();
   }
   if (target.id === 'retry-moves') void renderMoves();
+  if (target.id === 'clear-gallery') {
+    Object.assign(gallery, { generation: null, game: null, query: '' });
+    render();
+    element('gallery-search').focus();
+  }
 }
 
 function selectType(id: number): void {
@@ -189,6 +235,11 @@ function selectType(id: number): void {
 
 function handleChange(event: Event): void {
   const target = event.target as HTMLSelectElement;
+  if (target.id === 'gallery-generation' || target.id === 'gallery-game') {
+    const key = target.id === 'gallery-generation' ? 'generation' : 'game';
+    gallery[key] = Number(target.value) || null;
+    renderGallery();
+  }
   if (target.id === 'second-type') {
     state.types = [state.types[0], ...(target.value ? [Number(target.value)] : [])];
     renderResults();
@@ -202,6 +253,10 @@ function handleChange(event: Event): void {
 function handleInput(event: Event): void {
   const target = event.target as HTMLInputElement;
   if (target.id === 'pokemon-search') updateSuggestions();
+  if (target.id === 'gallery-search') {
+    gallery.query = target.value;
+    renderGallery();
+  }
   if (target.id === 'type-search') {
     const term = normalize(target.value);
     const choices = element('type-grid').querySelectorAll<HTMLButtonElement>('button');
@@ -219,10 +274,10 @@ function updateSuggestions(): void {
     closeSuggestions();
     return;
   }
-  const matches = searchPokemon(catalog, query, state.generation);
+  const matches = searchPokemon(catalog, query);
   element('suggestions').innerHTML = matches.length
     ? suggestions(catalog, matches, state)
-    : '<div class="search-empty">No matching standard form in this generation. Check the spelling or choose a later generation.</div>';
+    : '<div class="search-empty">No matching Pokémon. Try another name or Pokédex number.</div>';
   element('suggestions').hidden = false;
   input.setAttribute('aria-expanded', 'true');
   announce(

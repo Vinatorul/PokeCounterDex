@@ -18,8 +18,7 @@ export function movesTable(catalog: Catalog, entries: Learnset, generation: numb
     <label>Learn method<select id="move-method"><option value="">All methods</option>${methods.map((id) => `<option value="${id}">${escapeHtml(catalog.methods.find((method) => method.id === id)!.name)}</option>`).join('')}</select></label><span id="move-count" class="muted"></span></div>
     <div class="table-scroll"><table><caption class="sr-only">Moves and ways to learn them in the selected game</caption><thead><tr><th scope="col">Move</th><th scope="col">Type</th><th scope="col">How to learn</th></tr></thead><tbody id="move-rows"></tbody></table></div>
     <p id="no-moves" class="empty-inline" hidden>No moves match these filters.</p>
-    <button class="text-button" id="more-moves" type="button" hidden>Show all matching moves</button>
-    <p class="calculation-note">Egg, tutor and transfer moves may need other games.</p>`;
+    <button class="text-button" id="more-moves" type="button" hidden>Show all matching moves</button>`;
 }
 
 export function moveRows(catalog: Catalog, entries: Learnset, generation: number): string {

@@ -10,6 +10,7 @@ import {
   moveType,
   pokemonAbilities,
   pokemonTypes,
+  rulesForPokemon,
   searchPokemon,
 } from '../src/engine.ts';
 import type { Catalog } from '../src/models.ts';
@@ -99,14 +100,22 @@ test('offensive and defensive tables use distinct directions', () => {
   assert.deepEqual(psychicDefense, [7, 8, 17]);
 });
 
-test('search handles punctuation, gender, numbers and generation boundaries', () => {
-  assert.equal(searchPokemon(catalog, 'Mr Mime', 3)[0].id, 122);
-  assert.equal(searchPokemon(catalog, 'Nidoran♀', 3)[0].id, 29);
-  assert.equal(searchPokemon(catalog, 'farfetchd', 3)[0].id, 83);
-  assert.equal(searchPokemon(catalog, '#0025', 3)[0].id, 25);
-  assert.equal(searchPokemon(catalog, 'gholdengo', 3).length, 0);
-  assert.equal(searchPokemon(catalog, 'gholdengo', 9)[0].id, 1000);
-  assert.equal(searchPokemon(catalog, '<script>', 9).length, 0);
+test('search finds every generation and handles punctuation, gender and numbers', () => {
+  assert.equal(searchPokemon(catalog, 'Mr Mime')[0].id, 122);
+  assert.equal(searchPokemon(catalog, 'Nidoran♀')[0].id, 29);
+  assert.equal(searchPokemon(catalog, 'farfetchd')[0].id, 83);
+  assert.equal(searchPokemon(catalog, '#0025')[0].id, 25);
+  assert.equal(searchPokemon(catalog, 'gholdengo')[0].id, 1000);
+  assert.equal(searchPokemon(catalog, '1025')[0].id, 1025);
+  assert.equal(searchPokemon(catalog, '<script>').length, 0);
+});
+
+test('selecting a newer Pokémon switches to valid rules and clears the older game', () => {
+  const leafgreen = { generation: 3, game: 7 };
+  assert.deepEqual(rulesForPokemon(pokemon(1000), leafgreen), { generation: 9, game: null });
+  assert.deepEqual(rulesForPokemon(pokemon(12), leafgreen), leafgreen);
+  assert.deepEqual(rulesForPokemon(pokemon(35), { generation: 6, game: 15 }), { generation: 6, game: 15 });
+  assert.deepEqual(leafgreen, { generation: 3, game: 7 });
 });
 
 test('saved settings reject malformed or mismatched rules', () => {

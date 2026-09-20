@@ -22,8 +22,8 @@ export function shell(): string {
     <a class="brand" href="./" aria-label="PokéCounterDex home"><span class="brand-mark" aria-hidden="true">P</span>Poké<span>CounterDex</span></a>
     </div></header>
     <main id="main" class="workspace"><div class="toolbar">
-      <nav class="tabs" aria-label="Lookup mode"><button id="pokemon-tab" class="tab active" type="button" aria-pressed="true">Pokémon</button><button id="types-tab" class="tab" type="button" aria-pressed="false">Types</button></nav>
-      <div class="rules"><label>Generation<select id="generation"></select></label><label>Game<select id="game"></select></label></div>
+      <nav class="tabs" aria-label="Lookup mode"><button id="pokemon-tab" class="tab active" type="button" aria-pressed="true">Pokémon</button><button id="gallery-tab" class="tab" type="button" aria-pressed="false">Browse</button><button id="types-tab" class="tab" type="button" aria-pressed="false">Types</button></nav>
+      <div id="battle-rules" class="rules"><label>Generation<select id="generation"></select></label><label>Game<select id="game"></select></label></div>
     </div><div id="lookup"></div><div id="results"></div>
     <p id="announcement" class="sr-only" role="status" aria-live="polite"></p></main>
     <footer class="footer">
@@ -59,8 +59,7 @@ export function pokemonLookup(): string {
   return `<div class="section-heading"><h1>Who are you facing?</h1></div>
     <div class="search-area"><div class="search-shell"><span class="search-symbol" aria-hidden="true">⌕</span>
     <input id="pokemon-search" type="search" role="combobox" aria-label="Search Pokémon" aria-autocomplete="list" aria-expanded="false" aria-controls="suggestions" autocomplete="off" spellcheck="false" placeholder="Name or Pokédex number…" /><kbd aria-hidden="true">/</kbd></div>
-    <div id="suggestions" class="suggestions" role="listbox" aria-label="Matching Pokémon" hidden></div></div>
-    <p class="search-hint">Availability varies by game; some Pokémon require trading.</p>`;
+    <div id="suggestions" class="suggestions" role="listbox" aria-label="Matching Pokémon" hidden></div></div>`;
 }
 
 export function pokemonCard(catalog: Catalog, pokemon: Pokemon, state: AppState): string {
@@ -79,7 +78,7 @@ export function suggestions(catalog: Catalog, pokemon: Pokemon[], state: AppStat
         index,
       ) => `<div class="suggestion" id="suggestion-${index}" role="option" aria-selected="false" data-pokemon="${entry.id}">
     <img src="${asset(`sprites/${entry.id}.png`)}" alt="" width="40" height="40" /><span class="suggestion-name">${escapeHtml(entry.displayName)}<small>#${String(entry.id).padStart(4, '0')}</small></span>
-    <span class="type-list">${typeBadges(catalog, pokemonTypes(entry, state.generation))}</span></div>`,
+    <span class="type-list">${typeBadges(catalog, pokemonTypes(entry, Math.max(entry.generation, state.generation)))}</span></div>`,
     )
     .join('');
 }

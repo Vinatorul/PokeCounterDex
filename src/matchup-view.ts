@@ -1,6 +1,6 @@
 import { attackMatchups, defenseMatchups } from './engine.ts';
 import type { AppState, Catalog, Matchup } from './models.ts';
-import { escapeHtml, typeBadge, typeBadges, typeById } from './view.ts';
+import { typeBadge, typeBadges, typeById } from './view.ts';
 
 export const multiplier = (value: number): string => `${value}×`;
 
@@ -10,7 +10,7 @@ function damageCards(rows: Matchup[]): string {
     .sort((a, b) => b.factor - a.factor || a.type.name.localeCompare(b.type.name))
     .map(
       (row) => `<div class="damage-card ${row.factor >= 4 ? 'standout' : ''}">
-    ${typeBadge(row.type)}<strong>${multiplier(row.factor)}</strong>${row.factor >= 4 ? '<small>Double weakness</small>' : ''}</div>`,
+    ${typeBadge(row.type)}<strong>${multiplier(row.factor)}</strong></div>`,
     )
     .join('')}</div>`;
 }
@@ -19,23 +19,11 @@ function compactGroup(title: string, rows: Matchup[]): string {
   return `<div class="minor-section"><h3>${title}</h3><div class="type-list">${rows.length ? rows.map((row) => typeBadge(row.type, multiplier(row.factor))).join('') : '<span class="muted">None</span>'}</div></div>`;
 }
 
-function dualTypeNote(catalog: Catalog, types: number[], rows: Matchup[]): string {
-  if (types.length !== 2) return '';
-  const row =
-    rows.find((entry) => entry.factor >= 4) ??
-    rows.find((entry) => entry.parts.includes(2) && entry.parts.includes(0.5));
-  if (!row) return '';
-  const names = types.map((id) => escapeHtml(typeById(catalog, id).name));
-  const [first, second] = row.parts;
-  return `<div class="matchup-note"><strong>${escapeHtml(row.type.name)}</strong> against ${names[0]} (${multiplier(first)}) and ${names[1]} (${multiplier(second)}): <strong>${first} × ${second} = ${multiplier(first * second)}.</strong></div>`;
-}
-
 export function defensePanel(catalog: Catalog, types: number[], state: AppState): string {
   const rows = defenseMatchups(catalog, types, state.generation);
   const heading = state.mode === 'pokemon' ? 'What to use against it' : 'What hits this combination';
   return `<section class="matchup-panel" aria-label="Defensive matchups"><div class="panel-heading"><h2>${heading}</h2></div>
     <p class="section-label">SUPER EFFECTIVE</p>${damageCards(rows.filter((row) => row.factor > 1))}
-    ${dualTypeNote(catalog, types, rows)}
     ${compactGroup(
       'Not very effective',
       rows.filter((row) => row.factor > 0 && row.factor < 1),

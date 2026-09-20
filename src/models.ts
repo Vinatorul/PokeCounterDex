@@ -35,6 +35,7 @@ export interface Game {
   name: string;
   generation: number;
   abilitiesEnabled: boolean;
+  availablePokemon: number[];
 }
 export interface Catalog {
   generations: { id: number; name: string }[];
@@ -57,9 +58,14 @@ export interface Selection {
   game: number | null;
 }
 export interface AppState extends Selection {
-  mode: 'pokemon' | 'types';
+  mode: 'pokemon' | 'types' | 'gallery';
   pokemon: number;
   types: number[];
+}
+export interface GalleryFilters {
+  generation: number | null;
+  game: number | null;
+  query: string;
 }
 export type Learnset = [move: number, method: number, level: number][];
 export type Learnsets = Record<string, Learnset>;

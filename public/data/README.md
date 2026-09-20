@@ -4,6 +4,8 @@ These files contain one default Pokémon for each of the 1,025 species introduce
 
 The source is the [PokéAPI CSV repository](https://github.com/PokeAPI/pokeapi/tree/575291cdb197a7e3a320297be276c9de4ef8401a/data/v2/csv), pinned to commit `575291cdb197a7e3a320297be276c9de4ef8401a`. PokéAPI is a community-maintained source, not an official Nintendo dataset. Its license and trademark notice are retained in `public/data/POKEAPI-LICENSE.txt`.
 
+Game support lists use [Pokémon Showdown](https://github.com/smogon/pokemon-showdown/tree/9e317a666d9fd250f36f494778e843141f09bdba), pinned to `9e317a666d9fd250f36f494778e843141f09bdba`. Its MIT license is retained in `SHOWDOWN-LICENSE.txt`. These lists include trades, transfers, DLC and historical events; they do not imply current event availability or availability of every form.
+
 ## Refresh and verify
 
 Python 3.10 or newer is sufficient; the scripts have no third-party dependencies.
@@ -13,16 +15,18 @@ python3 scripts/refresh_data.py
 python3 scripts/verify_data.py
 ```
 
-The refresh downloads only the required CSV files and upstream license from the pinned commit. To rebuild without network access, use `python3 scripts/refresh_data.py --offline`. The `source/REVISION` file identifies the local cache. A different upstream snapshot requires an explicit full SHA: `python3 scripts/refresh_data.py --revision FULL_COMMIT_SHA`. Review changes and run verification after refreshing. `--cache` and `--output` accept other directories.
+The refresh downloads the required CSV files, Showdown roster files and upstream licenses from the pinned commits. To rebuild without network access, use `python3 scripts/refresh_data.py --offline`. The cache's `REVISION` and `showdown/REVISION` files identify the snapshots. A different PokéAPI snapshot requires an explicit full SHA: `python3 scripts/refresh_data.py --revision FULL_COMMIT_SHA`. Review changes and run verification after refreshing. `--cache` and `--output` accept other directories.
 
 The generated `manifest.json` records the revision, attribution, counts, and SHA-256 of every input and generated JSON output. Do not deploy `.data-cache/`, `.tools/`, or the scripts; only deploy `public/data/`.
 
 ## Files and schema
 
 - `catalog.json` contains generations, games, Pokémon, types, abilities, move names/types, learning methods, and the type chart.
+- Each game's `availablePokemon` lists supported species as default Pokémon IDs, including trades, transfers, DLC and historical events. This is independent of learnset coverage.
 - `learnsets/{versionGroupId}.json` maps a Pokémon ID to arrays of `[moveId, methodId, level]`. The IDs are original PokéAPI IDs. Identical tuples are deduplicated. Level zero is preserved; do not assume it means a level-up move.
 - `manifest.json` gives per-game Pokémon and record counts, input/output hashes, source notes, and attribution.
 - `POKEAPI-LICENSE.txt` is the upstream license, copied verbatim.
+- `SHOWDOWN-LICENSE.txt` is the game-roster source's license, copied verbatim.
 
 The agreed catalog fields are preserved. Optional additional fields are `games[].abilitiesEnabled`, `abilities[].generation`, `abilities[].descriptionVersionGroup`, and `methods:[{id,name,identifier}]`. The `source` object includes scope and history notes plus `battleTypeIds` and `displayOnlyTypeIds`.
 
